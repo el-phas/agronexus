@@ -16,9 +16,28 @@ const Order = sequelize.define('Order', {
     allowNull: false,
   },
   status: {
-    type: DataTypes.ENUM('pending', 'confirmed', 'shipped', 'delivered', 'cancelled'),
-    defaultValue: 'pending',
+    type: DataTypes.ENUM(
+      'pending-payment',
+      'payment-confirmed',
+      'processing',
+      'shipped',
+      'delivered',
+      'completed',
+      'cancelled',
+      'refunded'
+    ),
+    defaultValue: 'pending-payment',
   },
+  payment_status: {
+    type: DataTypes.ENUM('not-initiated', 'pending', 'paid', 'failed'),
+    defaultValue: 'not-initiated',
+  },
+  delivery_address: DataTypes.TEXT,
+  delivery_notes: DataTypes.TEXT,
+  expected_delivery: DataTypes.DATE,
+  cancellation_reason: DataTypes.TEXT,
+  cancelled_by: DataTypes.ENUM('buyer', 'seller', 'admin'),
+  cancellation_date: DataTypes.DATE,
   total_amount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

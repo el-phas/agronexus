@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import sequelize from './config/database.js';
-import { errorHandler } from './middleware/auth.js';
+import errorHandler from './middleware/errorHandler.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -13,6 +13,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/chat', chatbotRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
