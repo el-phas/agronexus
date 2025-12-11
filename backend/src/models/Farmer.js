@@ -1,39 +1,16 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import mongoose from 'mongoose';
 
-const Farmer = sequelize.define('Farmer', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  user_id: {
-    type: DataTypes.INTEGER,
-    unique: true,
-    allowNull: false,
-  },
-  location: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-  },
-  farm_name: DataTypes.STRING(255),
-  bio: DataTypes.TEXT,
-  rating: {
-    type: DataTypes.DECIMAL(3, 2),
-    defaultValue: 0,
-  },
-  total_reviews: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  verification_status: {
-    type: DataTypes.ENUM('pending', 'verified', 'rejected'),
-    defaultValue: 'pending',
-  },
-}, {
-  tableName: 'farmers',
-  timestamps: true,
-  underscored: true,
-});
+const { Schema } = mongoose;
 
+const FarmerSchema = new Schema({
+  user_id: { type: Schema.Types.ObjectId, ref: 'User', unique: true, required: true },
+  location: { type: String, required: true },
+  farm_name: { type: String },
+  bio: { type: String },
+  rating: { type: Number, default: 0 },
+  total_reviews: { type: Number, default: 0 },
+  verification_status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+}, { timestamps: true });
+
+const Farmer = mongoose.models.Farmer || mongoose.model('Farmer', FarmerSchema);
 export default Farmer;

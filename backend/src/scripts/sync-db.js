@@ -1,16 +1,28 @@
+import mongoose from '../config/database.js';
 import dotenv from 'dotenv';
-import sequelize from '../config/database.js';
 
 dotenv.config();
 
 const syncDatabase = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('Database connection established');
+    if (mongoose.connection.readyState === 1) {
+      console.log('MongoDB connection established');
+    } else {
+      await new Promise((res, rej) => {
+        mongoose.connection.once('open', res);
+        mongoose.connection.once('error', rej);
+      });
+      console.log('MongoDB connected');
+    }
 
-    await sequelize.sync({ alter: true });
-    console.log('Database tables synced successfully');
+    // Ensure indexes for all models
+    const models = mongoose.models;
+    for (const name of Object.keys(models)) {
+      await models[name].createIndexes();
+      console.log(`Ensured indexes for model: ${name}`);
+    }
 
+    console.log('Database sync (indexes) completed');
     process.exit(0);
   } catch (error) {
     console.error('Database sync failed:', error);

@@ -2,7 +2,7 @@ import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import sequelize from './config/database.js';
+import mongoose from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
 
 // Routes
@@ -48,11 +48,13 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('Database connection established');
-    
-    await sequelize.sync({ alter: false });
-    console.log('Database synced');
+    if (mongoose.connection.readyState !== 1) {
+      await new Promise((res, rej) => {
+        mongoose.connection.once('open', res);
+        mongoose.connection.once('error', rej);
+      });
+    }
+    console.log('MongoDB connection established');
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -1,45 +1,21 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import mongoose from 'mongoose';
 
-const Product = sequelize.define('Product', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  farmer_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  name: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-  },
-  description: DataTypes.TEXT,
-  category: DataTypes.STRING(100),
-  price: {
-    type: DataTypes.DECIMAL(10, 2),
-    allowNull: false,
-  },
-  unit: DataTypes.STRING(50),
-  available_quantity: DataTypes.DECIMAL(10, 2),
-  image_url: DataTypes.STRING(255),
-  is_organic: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  rating: {
-    type: DataTypes.DECIMAL(3, 2),
-    defaultValue: 0,
-  },
-  total_reviews: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-}, {
-  tableName: 'products',
-  timestamps: true,
-  underscored: true,
-});
+const { Schema } = mongoose;
 
+const ProductSchema = new Schema({
+  farmer_id: { type: Schema.Types.ObjectId, ref: 'Farmer', required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  category: { type: String },
+  price: { type: Number, required: true },
+  unit: { type: String },
+  available_quantity: { type: Number, default: 0 },
+  image_url: { type: String },
+  is_organic: { type: Boolean, default: false },
+  rating: { type: Number, default: 0 },
+  total_reviews: { type: Number, default: 0 },
+  status: { type: String, enum: ['active','inactive','delisted'], default: 'active' },
+}, { timestamps: true });
+
+const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
 export default Product;

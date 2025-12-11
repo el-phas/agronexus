@@ -1,27 +1,14 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import mongoose from 'mongoose';
 
-const OrderItem = sequelize.define('OrderItem', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  order_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  product_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  quantity: DataTypes.DECIMAL(10, 2),
-  unit_price: DataTypes.DECIMAL(10, 2),
-  subtotal: DataTypes.DECIMAL(10, 2),
-}, {
-  tableName: 'order_items',
-  timestamps: false,
-  underscored: true,
-});
+const { Schema } = mongoose;
 
+const OrderItemSchema = new Schema({
+  order_id: { type: Schema.Types.ObjectId, ref: 'Order', required: true },
+  product_id: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  quantity: { type: Number, default: 1 },
+  unit_price: { type: Number, default: 0 },
+  subtotal: { type: Number, default: 0 },
+}, { timestamps: false });
+
+const OrderItem = mongoose.models.OrderItem || mongoose.model('OrderItem', OrderItemSchema);
 export default OrderItem;
