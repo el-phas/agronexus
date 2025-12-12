@@ -16,7 +16,8 @@ export type Product = {
 };
 
 export const getProducts = (params?: Record<string, any>) =>
-  fetcher<Product[]>(api.get("/products", { params }));
+  // backend returns { results, total, page, limit } for list endpoints
+  api.get('/products', { params }).then((res) => res.data.results || res.data);
 
 export const getProduct = (id: number) => fetcher<Product>(api.get(`/products/${id}`));
 

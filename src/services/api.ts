@@ -35,7 +35,10 @@ api.interceptors.response.use(
 // Simple wrapper to return data or throw
 export async function fetcher<T>(promise: Promise<any>): Promise<T> {
   const res = await promise;
-  return res.data as T;
+  // Many backend list endpoints return { results, total, page, limit }
+  // Unwrap `results` if present so frontend callers receive arrays directly.
+  const data = res.data;
+  return (data && data.results) ? (data.results as T) : (data as T);
 }
 
 export default api;
