@@ -39,7 +39,9 @@ export const getProduct = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, category, price, unit, available_quantity, image_url, is_organic } = req.body;
+    let { name, description, category, price, unit, available_quantity, image_url, is_organic } = req.body;
+    price = Number(price);
+    available_quantity = Number(available_quantity || 0);
     if (!req.user || !name || !price) return res.status(400).json({ error: 'Missing required fields' });
 
     const farmer = await Farmer.findOne({ user_id: req.user.id });

@@ -17,6 +17,12 @@ const Insights = () => {
   const [weather, setWeather] = useState<any>(null);
   const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => tasksService.getTasks(), enabled: false });
 
+  const defaultLearningResources = [
+    { title: 'Top 5 ways to boost tomato yield', type: 'article' },
+    { title: 'Best drip irrigation methods', type: 'video' },
+    { title: 'How to prevent fall armyworm', type: 'guide' },
+  ];
+
   useQuery({ queryKey: ['weather', 'insights'], queryFn: () => weatherService.getWeatherByCity('Nairobi'), onSuccess: (w) => setWeather(w) });
 
   const avgPricesByCategory = (products || []).reduce((acc: any, p: any) => {
@@ -87,13 +93,13 @@ const Insights = () => {
                 <div className="mb-4">
                   <h4 className="font-semibold mb-2">Personalized Farming Tips</h4>
                   <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                    {farmingTips.slice(0,4).map((t, i) => <li key={i}>{t}</li>)}
+                    {(insights.personalized?.tips?.length ? insights.personalized.tips : farmingTips.slice(0,4)).map((t: any, i: number) => <li key={i}>{t}</li>)}
                   </ul>
                 </div>
                 <div className="mb-4">
                   <h4 className="font-semibold mb-2">Weather-Driven Insight</h4>
-                  <div className="text-sm text-muted-foreground">{weather ? `Conditions: ${weather.condition}, ${weather.temperature}°C` : 'No weather data'}</div>
-                  <div className="text-sm text-muted-foreground mt-2">{weather ? weatherService.getAgricultureRecommendations(weather).map((r:any,i:number)=>(<div key={i}>{r}</div>)) : ''}</div>
+                  <div className="text-sm text-muted-foreground">{insights.weatherInsights?.irrigation?.[0] || (weather ? `Conditions: ${weather.condition}, ${weather.temperature}°C` : 'No weather data')}</div>
+                  <div className="text-sm text-muted-foreground mt-2">{insights.weatherInsights?.heatStress?.[0] || (weather ? weatherService.getAgricultureRecommendations(weather).map((r:any,i:number)=>(<div key={i}>{r}</div>)) : '')}</div>
                 </div>
               </CardContent>
             </Card>
@@ -104,13 +110,14 @@ const Insights = () => {
               <CardContent>
                 <div className="text-sm text-muted-foreground mb-2">Average Prices by Category</div>
                 <ul>
-                  {Object.entries((products || []).reduce((acc:any, p:any) => {
-                    acc[p.category] = acc[p.category] || { sum: 0, count: 0 };
-                    acc[p.category].sum += p.price || 0;
-                    acc[p.category].count += 1;
-                    return acc;
-                  }, {})).map(([category, data]: any) => (
-                    <li key={category} className="flex justify-between py-2 border-b">{category}<span>KES {Math.round((data.sum / data.count) || 0)}</span></li>
+                  {(insights.market?.priceAgg || avgPricesByCategory || []).map((c: any) => (
+                    <li key={c.category} className="flex justify-between py-2 border-b">{c.category}<span>KES {Math.round(c.avgPrice || 0)}</span></li>
+                  ))}
+                </ul>
+                <div className="mt-2 text-sm text-muted-foreground">Top regional best-sellers:</div>
+                <ul>
+                  {(insights.market?.bestSelling || []).map((s: any) => (
+                    <li key={s.product.name} className="flex justify-between py-1 border-b">{s.product.name}<span className="text-muted-foreground">Sold: {s.sold}</span></li>
                   ))}
                 </ul>
               </CardContent>
@@ -147,8 +154,15 @@ const Insights = () => {
                 <CardHeader><CardTitle>Soil & Crop Health Alerts</CardTitle></CardHeader>
                 <CardContent>
                   <ul className="text-sm text-muted-foreground">
-                    <li>Early signs of nutrient deficiency in maize — consider soil test</li>
-                    <li>Monitor for fall armyworm during the wet season</li>
+                    {(insights.soilCropAlerts || []).slice(0,5).map((a:any, i:number) => (
+                      <li key={i}>{a.keyword ? `${a.keyword} — ${a.snippet || ''}` : a.snippet}</li>
+                    ))}
+                    {(!insights.soilCropAlerts || insights.soilCropAlerts.length === 0) && (
+                      <>
+                        <li>Early signs of nutrient deficiency in maize — consider soil test</li>
+                        <li>Monitor for fall armyworm during the wet season</li>
+                      </>
+                    )}
                   </ul>
                 </CardContent>
               </Card>
@@ -156,8 +170,7 @@ const Insights = () => {
                 <CardHeader><CardTitle>Seasonal Recommendations</CardTitle></CardHeader>
                 <CardContent>
                   <ul className="text-sm text-muted-foreground">
-                    <li>Plant short-duration maize varieties for the short rains</li>
-                    <li>Consider intercropping legumes to improve soil nitrogen</li>
+                    {(insights.seasonal?.recommendations || []).map((s:any,i:number) => <li key={i}>{s}</li>)}
                   </ul>
                 </CardContent>
               </Card>
@@ -165,8 +178,15 @@ const Insights = () => {
                 <CardHeader><CardTitle>Farm Activity Reminders</CardTitle></CardHeader>
                 <CardContent>
                   <ul className="text-sm text-muted-foreground">
-                    <li>Fertilizer application due in 7 days</li>
-                    <li>Next irrigation scheduled in 3 days (weather dependent)</li>
+                    {(insights.activityReminders || []).map((r:any,i:number) => (
+                      <li key={i}>{r.title} — {new Date(r.due_date).toLocaleDateString()}</li>
+                    ))}
+                    {(!insights.activityReminders || insights.activityReminders.length === 0) && (
+                      <>
+                        <li>Fertilizer application due in 7 days</li>
+                        <li>Next irrigation scheduled in 3 days (weather dependent)</li>
+                      </>
+                    )}
                   </ul>
                 </CardContent>
               </Card>
@@ -175,16 +195,16 @@ const Insights = () => {
               <Card>
                 <CardHeader><CardTitle>Market Trends & Prices (AI)</CardTitle></CardHeader>
                 <CardContent>
-                  <div className="text-sm text-muted-foreground">Best-selling products in your region and price trends. Consider selling tomatoes this week due to rising prices.</div>
+                  <div className="text-sm text-muted-foreground">{insights.market?.bestSelling?.length ? `Top pick: ${insights.market.bestSelling[0].product.name} — consider listing more stock.` : 'Best-selling data not yet available'}</div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader><CardTitle>Learning Resources</CardTitle></CardHeader>
                 <CardContent>
                   <ul className="text-sm text-muted-foreground">
-                    <li>Top 5 ways to boost tomato yield — Article</li>
-                    <li>Best drip irrigation methods — Video</li>
-                    <li>How to prevent fall armyworm — Guide</li>
+                    {(insights.learningResources || defaultLearningResources || []).map((r:any,i:number) => (
+                      <li key={i}>{r.title} — <span className="text-muted-foreground">{r.type}</span></li>
+                    ))}
                   </ul>
                 </CardContent>
               </Card>
@@ -194,8 +214,15 @@ const Insights = () => {
                 <CardHeader><CardTitle>Alert & Warnings</CardTitle></CardHeader>
                 <CardContent>
                   <ul className="text-sm text-muted-foreground">
-                    <li>Pest outbreak alert: Monitor fields this month</li>
-                    <li>Market price drop for maize expected next week</li>
+                    {(insights.alerts || []).map((a:any,i:number) => (
+                      <li key={i}>{a.type ? `${a.type}: ${a.message || ''}` : a.message}</li>
+                    ))}
+                    {(insights.alerts || []).length === 0 && (
+                      <>
+                        <li>Pest outbreak alert: Monitor fields this month</li>
+                        <li>Market price drop for maize expected next week</li>
+                      </>
+                    )}
                   </ul>
                 </CardContent>
               </Card>
