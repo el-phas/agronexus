@@ -2,6 +2,15 @@ import axios from "axios";
 
 // Prefer explicit VITE_API_BASE; fallback to localhost during dev, otherwise to current origin
 const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:4000' : window.location.origin);
+
+// Warn in production if no VITE_API_BASE was configured — falling back to the
+// current frontend origin usually means the frontend will try to call itself
+// instead of the API server and will fail. This usually causes unexpected
+// 401/404 redirects and broken flows in production builds.
+if (!import.meta.env.DEV && !import.meta.env.VITE_API_BASE) {
+  // eslint-disable-next-line no-console
+  console.warn('[agronexus] VITE_API_BASE is not set — API requests will target the frontend origin. Set VITE_API_BASE to your backend API URL.');
+}
 const FRONTEND_BASE = import.meta.env.VITE_FRONTEND_BASE || window.location.origin;
 
 export const api = axios.create({
