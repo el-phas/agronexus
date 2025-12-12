@@ -24,18 +24,19 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 // Manual CORS headers
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://agronexus-phi.vercel.app");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  next();
-});
+// CORS - use the cors package so origins can be configured via env
+const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : null;
+app.use(
+  cors({
+    origin: allowedOrigins || true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  })
+);
 
-// Handle preflight requests
-app.options("*", (req, res) => {
-  res.sendStatus(200);
-});
+// Handle preflight requests (use cors middleware for OPTIONS)
+app.options('*', cors());
 
 
 app.use(express.json());
