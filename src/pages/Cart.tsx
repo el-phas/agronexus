@@ -11,6 +11,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import cartService from '@/services/cart';
 import { Link } from "react-router-dom";
 
 interface CartItem {
@@ -24,38 +26,33 @@ interface CartItem {
 }
 
 export default function Cart() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Fresh Organic Tomatoes",
-      price: 120,
-      quantity: 2,
-      image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=300&fit=crop",
-      farmer: "John Mwangi",
-      unit: "kg",
-    },
-  ]);
+  const queryClient = useQueryClient();
+  const { data: cartItems = [] } = useQuery({ queryKey: ['cart'], queryFn: cartService.getCart });
 
-  const updateQuantity = (id: number, change: number) => {
-    setCartItems(
-      cartItems
-        .map((item) =>
-          item.id === id
-            ? { ...item, quantity: Math.max(1, item.quantity + change) }
-            : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
+  const updateMutation = useMutation({
+    mutationFn: ({ id, quantity }: any) => cartService.updateCartItem(id, { quantity }),
+    onSuccess: () => queryClient.invalidateQueries(['cart']),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => cartService.removeCartItem(id),
+    onSuccess: () => queryClient.invalidateQueries(['cart']),
+  });
+
+  const updateQuantity = (id: any, change: number) => {
+    const item = cartItems.find((c: any) => c._id === id || c.id === id);
+    if (!item) return;
+    const newQty = Math.max(1, (item.quantity || 1) + change);
+    updateMutation.mutate({ id: item._id || item.id, quantity: newQty });
   };
 
-  const removeItem = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+  const removeItem = (id: string) => {
+    const item = cartItems.find((c: any) => c._id === id || c.id === id);
+    if (!item) return;
+    deleteMutation.mutate(item._id || item.id);
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const subtotal = (cartItems || []).reduce((sum: number, item: any) => sum + (item.product_id?.price || item.price || 0) * (item.quantity || 0), 0);
   const shippingCost = 500;
   const tax = subtotal * 0.16;
   const total = subtotal + shippingCost + tax;
@@ -93,23 +90,23 @@ export default function Cart() {
                         <div className="flex gap-4">
                           {/* Image */}
                           <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
+                                    <img
+                                      src={item.product_id?.image_url || item.product_id?.image || item.image}
+                                      alt={item.product_id?.name || item.name}
+                                      className="w-full h-full object-cover"
+                                    />
                           </div>
 
                           {/* Details */}
                           <div className="flex-1">
                             <h3 className="font-display font-bold text-lg">
-                              {item.name}
+                              {item.product_id?.name || item.name}
                             </h3>
                             <p className="text-muted-foreground text-sm">
-                              by {item.farmer}
+                              by {item.product_id?.farmer_name || item.farmer}
                             </p>
                             <p className="text-primary font-bold mt-2">
-                              KES {item.price}/{item.unit}
+                              KES {item.product_id?.price || item.price}/{item.product_id?.unit || item.unit}
                             </p>
                           </div>
 
@@ -118,7 +115,7 @@ export default function Cart() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => removeItem(item._id || item.id)}
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
@@ -126,7 +123,7 @@ export default function Cart() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => updateQuantity(item.id, -1)}
+                                onClick={() => updateQuantity(item._id || item.id, -1)}
                               >
                                 <Minus className="w-4 h-4" />
                               </Button>
@@ -136,7 +133,7 @@ export default function Cart() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => updateQuantity(item.id, 1)}
+                                onClick={() => updateQuantity(item._id || item.id, 1)}
                               >
                                 <Plus className="w-4 h-4" />
                               </Button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import api from "@/services/api";
+import cartService from '@/services/cart';
 import authService from "@/services/auth";
 
 export default function Checkout() {
@@ -14,7 +16,7 @@ export default function Checkout() {
   const location = useLocation();
   const { toast } = useToast();
 
-  const cartItems = location.state?.cartItems || [];
+  const { data: cartItems = [] } = useQuery({ queryKey: ['cart'], queryFn: cartService.getCart });
   const [loading, setLoading] = useState(false);
   const [paymentStarted, setPaymentStarted] = useState(false);
 
@@ -34,7 +36,7 @@ export default function Checkout() {
     setLoading(true);
     try {
       const orderResponse = await api.post('/orders', {
-        items: cartItems.map((item: any) => ({ product_id: item.id, quantity: item.quantity, unit_price: item.price, seller_id: item.seller_id })),
+        items: (cartItems || []).map((item: any) => ({ product_id: item.product_id?._id || item.product_id || item.id, quantity: item.quantity, unit_price: item.product_id?.price || item.unit_price || item.price, seller_id: item.product_id?.farmer_id || item.seller_id })),
         delivery_address: formData.delivery_address,
         delivery_notes: formData.delivery_notes,
       });
@@ -123,10 +125,10 @@ export default function Checkout() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2 pb-4 border-b">
-                    {cartItems.map((item: any) => (
-                      <div key={item.id} className="flex justify-between text-sm">
-                        <span>{item.name} x{item.quantity}</span>
-                        <span>KES {item.price * item.quantity}</span>
+                    {(cartItems || []).map((item: any) => (
+                      <div key={item._id || item.id} className="flex justify-between text-sm">
+                        <span>{item.product_id?.name || item.name} x{item.quantity}</span>
+                        <span>KES {(item.product_id?.price || item.unit_price || item.price) * (item.quantity || 0)}</span>
                       </div>
                     ))}
                   </div>
