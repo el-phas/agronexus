@@ -87,7 +87,7 @@ export function MarketplacePreview() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
-                  {product.available} available
+                  {product.available_quantity ?? product.available ?? 0} available
                 </p>
               </CardContent>
             </Card>

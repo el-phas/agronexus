@@ -29,6 +29,15 @@ const Insights = () => {
             </Card>
             <Card>
               <CardHeader>
+                <CardTitle>Sales</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xl font-bold">KES {insights.totalSales?.totalSales ?? 0}</div>
+                <div className="text-sm text-muted-foreground">{insights.totalSales?.orders ?? 0} orders</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <CardTitle>Top Products</CardTitle>
               </CardHeader>
               <CardContent>
