@@ -35,7 +35,7 @@ export interface ChatAction {
 
 class ChatbotService {
   private conversationHistory: ChatMessage[] = [];
-  private apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+  private apiBaseUrl = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
   /**
    * Send message to chatbot and get response

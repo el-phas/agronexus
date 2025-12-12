@@ -14,10 +14,10 @@ export const validateRequest = (schema, property = 'body') => {
 
 export const schemas = {
   createOrderSchema: Joi.object({
-    items: Joi.array().items(Joi.object({ product_id: Joi.number().integer().required(), quantity: Joi.number().positive().required(), unit_price: Joi.number().positive().required(), seller_id: Joi.number().integer().required() })).min(1).required(),
+    items: Joi.array().items(Joi.object({ product_id: Joi.string().required(), quantity: Joi.number().positive().required(), unit_price: Joi.number().positive().required(), seller_id: Joi.string().required() })).min(1).required(),
     delivery_address: Joi.string().max(1000).required(),
     delivery_notes: Joi.string().max(500).allow('', null),
   }),
-  initiatePaymentSchema: Joi.object({ orderId: Joi.number().integer().required(), phoneNumber: Joi.string().required() }),
+  initiatePaymentSchema: Joi.object({ orderId: Joi.string().required(), phoneNumber: Joi.string().required() }),
   updateOrderStatusSchema: Joi.object({ status: Joi.string().valid('processing','shipped','delivered','completed','cancelled').required() }),
 };
