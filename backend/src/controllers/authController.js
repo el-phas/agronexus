@@ -18,6 +18,14 @@ export const register = async (req, res) => {
     }
 
     const token = generateToken(user._id);
+    // Set HttpOnly secure cookie for session token
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    };
+    res.cookie('agronexus_token', token, cookieOptions);
     res.status(201).json({ user: { id: user._id, username: user.username, email: user.email, user_type: user.user_type }, token });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -36,6 +44,13 @@ export const login = async (req, res) => {
     if (!valid) return res.status(401).json({ error: 'Invalid password' });
 
     const token = generateToken(user._id);
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    };
+    res.cookie('agronexus_token', token, cookieOptions);
     res.json({ user: { id: user._id, username: user.username, email: user.email, user_type: user.user_type }, token });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -52,4 +67,7 @@ export const getMe = async (req, res) => {
   }
 };
 
-export const logout = (req, res) => res.json({ message: 'Logged out' });
+export const logout = (req, res) => {
+  res.clearCookie('agronexus_token');
+  res.json({ message: 'Logged out' });
+};

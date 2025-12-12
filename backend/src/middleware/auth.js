@@ -3,7 +3,10 @@ import { User } from '../models/index.js';
 
 export const authenticate = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    // Accept token via Authorization header or HttpOnly cookie (agronexus_token)
+    const headerToken = req.headers.authorization?.split(' ')[1];
+    const cookieToken = req.cookies?.agronexus_token;
+    const token = headerToken || cookieToken;
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
