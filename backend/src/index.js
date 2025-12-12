@@ -17,6 +17,7 @@ import chatbotRoutes from './routes/chatbotRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import insightsRoutes from './routes/insightsRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/chat', chatbotRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/insights', insightsRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
