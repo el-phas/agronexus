@@ -23,12 +23,20 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(
-  cors({
-    origin: "https://agronexus-phi.vercel.app",
-    credentials: true
-  })
-);
+// Manual CORS headers
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://agronexus-phi.vercel.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
+});
+
+// Handle preflight requests
+app.options("*", (req, res) => {
+  res.sendStatus(200);
+});
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
