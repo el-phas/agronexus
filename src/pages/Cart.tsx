@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import cartService from '@/services/cart';
+import cartService, { getCart } from '@/services/cart';
 import { Link } from "react-router-dom";
 
 interface CartItem {
@@ -27,16 +27,16 @@ interface CartItem {
 
 export default function Cart() {
   const queryClient = useQueryClient();
-  const { data: cartItems = [] } = useQuery({ queryKey: ['cart'], queryFn: cartService.getCart });
+  const { data: cartItems = [] } = useQuery<any[]>({ queryKey: ['cart'], queryFn: getCart });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, quantity }: any) => cartService.updateCartItem(id, { quantity }),
-    onSuccess: () => queryClient.invalidateQueries(['cart']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => cartService.removeCartItem(id),
-    onSuccess: () => queryClient.invalidateQueries(['cart']),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cart'] }),
   });
 
   const updateQuantity = (id: any, change: number) => {

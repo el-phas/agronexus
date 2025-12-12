@@ -1,6 +1,6 @@
 import { api, fetcher } from './api';
 
-export const getCart = () => fetcher(api.get('/cart'));
+export const getCart = () => fetcher<any[]>(api.get('/cart'));
 
 export const addToCart = (payload: { product_id: string; quantity?: number }) =>
   api.post('/cart', payload).then((res) => res.data);

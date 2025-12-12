@@ -5,12 +5,14 @@ import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
 import chatbotService from '@/services/chatbot';
+import authService from '@/services/auth';
 import weatherService from '@/services/weather';
 import productsService from '@/services/products';
 import tasksService from '@/services/tasks';
 
 const Insights = () => {
-  const { data: insights = {} } = useQuery({ queryKey: ['insights'], queryFn: insightsService.getInsights });
+  const isAuth = authService.isAuthenticated();
+  const { data: insights = {} } = useQuery({ queryKey: ['insights'], queryFn: insightsService.getInsights, enabled: isAuth });
   const farmingTips = chatbotService.getFarmingTips();
   const buyingTips = chatbotService.getBuyingTips();
   const { data: products = [] } = useQuery({ queryKey: ['products', 'insights'], queryFn: () => productsService.getProducts({ limit: 100 }) });

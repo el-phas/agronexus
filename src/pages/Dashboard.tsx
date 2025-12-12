@@ -63,14 +63,15 @@ const Dashboard = () => {
 
   const createTaskMutation = useMutation({
     mutationFn: (payload: any) => tasksService.createTask(payload),
-    onSuccess: () => queryClient.invalidateQueries(["tasks"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
+  
 
   const createProductMutation = useMutation({
     mutationFn: (formData: FormData) => productsService.createProduct(formData),
     onSuccess: () => {
       // invalidates product lists, etc.
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setShowAddProductForm(false);
       setNewProduct({ name: '', description: '', category: '', price: '', unit: '', available_quantity: '' });
       setImageFile(null);
@@ -80,12 +81,12 @@ const Dashboard = () => {
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, payload }: any) => tasksService.updateTask(id, payload),
-    onSuccess: () => queryClient.invalidateQueries(["tasks"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: (id: number) => tasksService.deleteTask(id),
-    onSuccess: () => queryClient.invalidateQueries(["tasks"]),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
   useEffect(() => {
@@ -473,7 +474,7 @@ const Dashboard = () => {
                       if(imageFile) formData.append('image', imageFile);
                       if(videoFile) formData.append('video', videoFile);
                       createProductMutation.mutate(formData);
-                    }}>{createProductMutation.isLoading ? 'Creating...' : 'Create'}</Button>
+                    }}>{createProductMutation.isPending ? 'Creating...' : 'Create'}</Button>
                     <Button variant="outline" onClick={() => setShowAddProductForm(false)}>Cancel</Button>
                   </div>
                 </div>

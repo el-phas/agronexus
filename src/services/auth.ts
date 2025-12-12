@@ -7,6 +7,7 @@ export interface User {
   user_type: "farmer" | "buyer";
   first_name?: string;
   last_name?: string;
+  location?: string;
 }
 
 export interface AuthResponse {
@@ -32,11 +33,8 @@ class AuthService {
     try {
       const response = await api.post("/auth/register", data);
       const { token, user } = response.data;
-      
-      // Store token and user
-      this.setToken(token);
+      // Store user locally; token is also set as HttpOnly cookie by the server for security
       this.setUser(user);
-      
       return response.data;
     } catch (error) {
       console.error("Registration error:", error);
@@ -51,11 +49,8 @@ class AuthService {
     try {
       const response = await api.post("/auth/login", { email, password });
       const { token, user } = response.data;
-      
-      // Store token and user
-      this.setToken(token);
+      // Store user locally; server sets HttpOnly cookie for the token
       this.setUser(user);
-      
       return response.data;
     } catch (error) {
       console.error("Login error:", error);
@@ -122,7 +117,7 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!this.getToken() || !!this.getUser();
   }
 
   /**
