@@ -87,6 +87,10 @@ NODE_ENV=development
 PORT=4000
 JWT_SECRET=your_jwt_secret_key_here_change_in_production
 JWT_EXPIRE=7d
+# Cloudinary (optional - add if you plan to upload images/videos)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ### 4. Sync Database & Seed Data
@@ -125,6 +129,10 @@ Server will run on `http://localhost:4000`
 - `GET /` - Get all products (paginated, searchable, filterable)
 - `GET /:id` - Get product details
 - `POST /` - Create product (farmers only)
+  - Supports multipart/form-data with fields like `name`, `price`, and optional `image` and `video` file fields. The backend uploads media to Cloudinary when configured.
+### Insights (`/api/insights`)
+- `GET /` - Get analytics and insights (requires auth)
+
 - `PUT /:id` - Update product (farmers only)
 - `DELETE /:id` - Delete product (farmers only)
 
