@@ -1,4 +1,5 @@
 import { Product, Farmer, Review } from '../models/index.js';
+import { uploadBuffer } from '../services/cloudinaryService.js';
 
 export const getProducts = async (req, res) => {
   try {
@@ -44,7 +45,23 @@ export const createProduct = async (req, res) => {
     const farmer = await Farmer.findOne({ user_id: req.user.id });
     if (!farmer) return res.status(403).json({ error: 'Only farmers can create products' });
 
-    const product = await Product.create({ farmer_id: farmer._id, name, description, category, price, unit, available_quantity, image_url, is_organic: is_organic || false });
+    // Handle optional uploaded files (image, video)
+    let imageUrl = image_url;
+    let videoUrl = undefined;
+    if (req.files) {
+      const imgFile = req.files.image && req.files.image[0];
+      const vidFile = req.files.video && req.files.video[0];
+      if (imgFile && imgFile.buffer) {
+        const result = await uploadBuffer(imgFile.buffer, { folder: 'agronexus/products', resource_type: 'image' });
+        imageUrl = result.secure_url;
+      }
+      if (vidFile && vidFile.buffer) {
+        const resultV = await uploadBuffer(vidFile.buffer, { folder: 'agronexus/products', resource_type: 'video' });
+        videoUrl = resultV.secure_url;
+      }
+    }
+
+    const product = await Product.create({ farmer_id: farmer._id, name, description, category, price, unit, available_quantity, image_url: imageUrl, video_url: videoUrl, is_organic: is_organic || false });
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -58,6 +75,20 @@ export const updateProduct = async (req, res) => {
 
     const farmer = await Farmer.findOne({ user_id: req.user.id });
     if (String(product.farmer_id) !== String(farmer._id)) return res.status(403).json({ error: 'Not authorized' });
+
+    // Handle media updates
+    if (req.files) {
+      const imgFile = req.files.image && req.files.image[0];
+      const vidFile = req.files.video && req.files.video[0];
+      if (imgFile && imgFile.buffer) {
+        const result = await uploadBuffer(imgFile.buffer, { folder: 'agronexus/products', resource_type: 'image' });
+        req.body.image_url = result.secure_url;
+      }
+      if (vidFile && vidFile.buffer) {
+        const resultV = await uploadBuffer(vidFile.buffer, { folder: 'agronexus/products', resource_type: 'video' });
+        req.body.video_url = resultV.secure_url;
+      }
+    }
 
     Object.assign(product, req.body);
     await product.save();

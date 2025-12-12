@@ -44,11 +44,15 @@ export function MarketplacePreview() {
           {products.map((product) => (
             <Card key={product.id} variant="elevated" className="group overflow-hidden">
               <div className="relative aspect-[4/3] overflow-hidden">
-                <img
-                  src={product.image}
+                {product.video_url ? (
+                  <video src={product.video_url} controls className="w-full h-full object-cover" />
+                ) : (
+                  <img
+                    src={product.image_url || product.image}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                )}
                 <Badge variant="success" className="absolute top-3 left-3">
                   {product.category}
                 </Badge>

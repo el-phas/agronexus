@@ -11,6 +11,7 @@ const ProductSchema = new Schema({
   unit: { type: String },
   available_quantity: { type: Number, default: 0 },
   image_url: { type: String },
+  video_url: { type: String },
   is_organic: { type: Boolean, default: false },
   rating: { type: Number, default: 0 },
   total_reviews: { type: Number, default: 0 },

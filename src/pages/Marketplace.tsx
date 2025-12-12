@@ -178,12 +178,20 @@ const Marketplace = () => {
                 {filteredProducts.map((product) => (
                   <Card key={product.id} variant="elevated" className="group overflow-hidden">
                     <div className={`${viewMode === "list" ? "flex" : ""}`}>
-                      <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 shrink-0" : "aspect-[4/3]"}`}>
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
+                        <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 shrink-0" : "aspect-[4/3]"}`}>
+                          {product.video_url ? (
+                            <video
+                              src={product.video_url}
+                              controls
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <img
+                              src={product.image_url || product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                          )}
                         <div className="absolute top-3 left-3 flex items-center gap-2">
                           <Badge variant="success">{product.category}</Badge>
                           {product.organic && <Badge variant="earth">Organic</Badge>}

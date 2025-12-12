@@ -10,6 +10,8 @@ export type Product = {
   rating?: number;
   reviews?: number;
   image?: string;
+  image_url?: string;
+  video_url?: string;
   category?: string;
   available?: string;
   organic?: boolean;
@@ -21,7 +23,8 @@ export const getProducts = (params?: Record<string, any>) =>
 
 export const getProduct = (id: number) => fetcher<Product>(api.get(`/products/${id}`));
 
-export const createProduct = (payload: Partial<Product>) => fetcher(api.post("/products", payload));
+export const createProduct = (payload: FormData) =>
+  api.post('/products', payload, { headers: { 'Content-Type': 'multipart/form-data' } }).then((res) => res.data);
 
 export default {
   getProducts,

@@ -29,6 +29,7 @@ import dashboardService from "@/services/dashboard";
 import weatherService from "@/services/weather";
 import tasksService from "@/services/tasks";
 import authService from "@/services/auth";
+import productsService from "@/services/products";
 import { AuthModal } from "@/components/AuthModal";
 
 
@@ -41,6 +42,10 @@ const Dashboard = () => {
   const isAuth = authService.isAuthenticated();
   const user = authService.getUser();
   const [authOpen, setAuthOpen] = useState(false);
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', category: '', price: '', unit: '', available_quantity: '' });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // Weather state
   const [weather, setWeather] = useState<any>(null);
@@ -59,6 +64,18 @@ const Dashboard = () => {
   const createTaskMutation = useMutation({
     mutationFn: (payload: any) => tasksService.createTask(payload),
     onSuccess: () => queryClient.invalidateQueries(["tasks"]),
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (formData: FormData) => productsService.createProduct(formData),
+    onSuccess: () => {
+      // invalidates product lists, etc.
+      queryClient.invalidateQueries(['products']);
+      setShowAddProductForm(false);
+      setNewProduct({ name: '', description: '', category: '', price: '', unit: '', available_quantity: '' });
+      setImageFile(null);
+      setVideoFile(null);
+    },
   });
 
   const updateTaskMutation = useMutation({
@@ -135,7 +152,7 @@ const Dashboard = () => {
                   <Button variant="outline" size="icon">
                     <Settings className="w-5 h-5" />
                   </Button>
-                  <Button variant="hero">
+                  <Button variant="hero" onClick={() => setShowAddProductForm(true)}>
                     <Plus className="w-5 h-5 mr-2" />
                     Add Product
                   </Button>
@@ -251,7 +268,7 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Sidebar */}
+              {/* Sidebar */}
             <div className="space-y-6">
               {/* Weather Widget */}
               <Card variant="glass">
@@ -422,6 +439,47 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+          {/* Add Product Modal */}
+          {showAddProductForm && (
+            <div className="fixed inset-0 flex items-center justify-center z-50">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setShowAddProductForm(false)} />
+              <div className="relative bg-card rounded-2xl p-6 w-full max-w-xl shadow-lg">
+                <h3 className="font-bold text-lg mb-4">Add Product</h3>
+                <div className="space-y-3">
+                  <input type="text" placeholder="Product Name" value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} className="w-full px-3 py-2 rounded-lg border" />
+                  <textarea placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({...newProduct, description: e.target.value})} className="w-full px-3 py-2 rounded-lg border" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="Category" value={newProduct.category} onChange={(e) => setNewProduct({...newProduct, category: e.target.value})} className="px-3 py-2 rounded-lg border" />
+                    <input type="number" placeholder="Price" value={newProduct.price} onChange={(e) => setNewProduct({...newProduct, price: e.target.value})} className="px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="Unit (e.g., kg)" value={newProduct.unit} onChange={(e) => setNewProduct({...newProduct, unit: e.target.value})} className="px-3 py-2 rounded-lg border" />
+                    <input type="number" placeholder="Available Qty" value={newProduct.available_quantity} onChange={(e) => setNewProduct({...newProduct, available_quantity: e.target.value})} className="px-3 py-2 rounded-lg border" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="flex flex-col">
+                      <span className="text-xs mb-1">Image</span>
+                      <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} />
+                    </label>
+                    <label className="flex flex-col">
+                      <span className="text-xs mb-1">Video (optional)</span>
+                      <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files ? e.target.files[0] : null)} />
+                    </label>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Button variant="hero" onClick={() => {
+                      const formData = new FormData();
+                      Object.entries(newProduct).forEach(([k,v]) => formData.append(k, String(v || '')));
+                      if(imageFile) formData.append('image', imageFile);
+                      if(videoFile) formData.append('video', videoFile);
+                      createProductMutation.mutate(formData);
+                    }}>{createProductMutation.isLoading ? 'Creating...' : 'Create'}</Button>
+                    <Button variant="outline" onClick={() => setShowAddProductForm(false)}>Cancel</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
       </main>
       <Footer />
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
