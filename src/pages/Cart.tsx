@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 interface CartItem {
   id: number;
