@@ -4,9 +4,28 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
+import chatbotService from '@/services/chatbot';
+import weatherService from '@/services/weather';
+import productsService from '@/services/products';
+import tasksService from '@/services/tasks';
 
 const Insights = () => {
   const { data: insights = {} } = useQuery({ queryKey: ['insights'], queryFn: insightsService.getInsights });
+  const farmingTips = chatbotService.getFarmingTips();
+  const buyingTips = chatbotService.getBuyingTips();
+  const { data: products = [] } = useQuery({ queryKey: ['products', 'insights'], queryFn: () => productsService.getProducts({ limit: 100 }) });
+  const [weather, setWeather] = useState<any>(null);
+  const { data: tasks = [] } = useQuery({ queryKey: ['tasks'], queryFn: () => tasksService.getTasks(), enabled: false });
+
+  useQuery({ queryKey: ['weather', 'insights'], queryFn: () => weatherService.getWeatherByCity('Nairobi'), onSuccess: (w) => setWeather(w) });
+
+  const avgPricesByCategory = (products || []).reduce((acc: any, p: any) => {
+    if (!p.category) return acc;
+    acc[p.category] = acc[p.category] || { sum: 0, count: 0 };
+    acc[p.category].sum += p.price || 0;
+    acc[p.category].count += 1;
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen">
@@ -43,7 +62,7 @@ const Insights = () => {
               <CardContent>
                 <ul>
                   {(insights.topProducts || []).map((p: any) => (
-                    <li key={p._id} className="py-2 border-b">{p.name} — {p.price}</li>
+                    <li key={p._id} className="py-2 border-b flex justify-between"><span>{p.name}</span><span className="text-muted-foreground">KES {p.price}</span></li>
                   ))}
                 </ul>
               </CardContent>
@@ -60,7 +79,128 @@ const Insights = () => {
                 </ul>
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Key Suggestions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-2">Personalized Farming Tips</h4>
+                  <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                    {farmingTips.slice(0,4).map((t, i) => <li key={i}>{t}</li>)}
+                  </ul>
+                </div>
+                <div className="mb-4">
+                  <h4 className="font-semibold mb-2">Weather-Driven Insight</h4>
+                  <div className="text-sm text-muted-foreground">{weather ? `Conditions: ${weather.condition}, ${weather.temperature}°C` : 'No weather data'}</div>
+                  <div className="text-sm text-muted-foreground mt-2">{weather ? weatherService.getAgricultureRecommendations(weather).map((r:any,i:number)=>(<div key={i}>{r}</div>)) : ''}</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Market Trends & Prices</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-2">Average Prices by Category</div>
+                <ul>
+                  {Object.entries((products || []).reduce((acc:any, p:any) => {
+                    acc[p.category] = acc[p.category] || { sum: 0, count: 0 };
+                    acc[p.category].sum += p.price || 0;
+                    acc[p.category].count += 1;
+                    return acc;
+                  }, {})).map(([category, data]: any) => (
+                    <li key={category} className="flex justify-between py-2 border-b">{category}<span>KES {Math.round((data.sum / data.count) || 0)}</span></li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </div>
+          <section className="mt-8">
+            <h2 className="font-display font-bold text-2xl mb-4">Recommended Actions</h2>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Personalized Farming Tips</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                    {farmingTips.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>AI Productivity Suggestions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                    {chatbotService.getFarmingTips().slice(0,3).map((t,i)=>(<li key={i}>{t}</li>))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid lg:grid-cols-3 gap-6 mt-6">
+              <Card>
+                <CardHeader><CardTitle>Soil & Crop Health Alerts</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground">
+                    <li>Early signs of nutrient deficiency in maize — consider soil test</li>
+                    <li>Monitor for fall armyworm during the wet season</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Seasonal Recommendations</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground">
+                    <li>Plant short-duration maize varieties for the short rains</li>
+                    <li>Consider intercropping legumes to improve soil nitrogen</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Farm Activity Reminders</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground">
+                    <li>Fertilizer application due in 7 days</li>
+                    <li>Next irrigation scheduled in 3 days (weather dependent)</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid lg:grid-cols-2 gap-6 mt-6">
+              <Card>
+                <CardHeader><CardTitle>Market Trends & Prices (AI)</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">Best-selling products in your region and price trends. Consider selling tomatoes this week due to rising prices.</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Learning Resources</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground">
+                    <li>Top 5 ways to boost tomato yield — Article</li>
+                    <li>Best drip irrigation methods — Video</li>
+                    <li>How to prevent fall armyworm — Guide</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="mt-6">
+              <Card>
+                <CardHeader><CardTitle>Alert & Warnings</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground">
+                    <li>Pest outbreak alert: Monitor fields this month</li>
+                    <li>Market price drop for maize expected next week</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
         </div>
       </main>
       <Footer />

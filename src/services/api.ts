@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL || window.location.origin;
+// Prefer explicit VITE_API_BASE; fallback to localhost during dev, otherwise to current origin
+const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:4000' : window.location.origin);
+const FRONTEND_BASE = import.meta.env.VITE_FRONTEND_BASE || window.location.origin;
 
 export const api = axios.create({
   baseURL: API_BASE + "/api",
@@ -26,7 +28,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("agronexus_token");
       localStorage.removeItem("agronexus_user");
-      window.location.href = "/marketplace";
+      // Use configured frontend base to avoid redirecting to an incorrect origin
+      // and ensure we redirect only to the public SPA route.
+      // Redirect to root to avoid SPA route 404 in some hosting environments
+      window.location.href = `${FRONTEND_BASE}/`;
     }
     return Promise.reject(error);
   }
