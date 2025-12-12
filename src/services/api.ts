@@ -28,10 +28,21 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("agronexus_token");
       localStorage.removeItem("agronexus_user");
-      // Use configured frontend base to avoid redirecting to an incorrect origin
-      // and ensure we redirect only to the public SPA route.
-      // Redirect to root to avoid SPA route 404 in some hosting environments
-      window.location.href = `${FRONTEND_BASE}/`;
+      // Avoid redirecting to a different origin (which can point to a different deployment)
+      // and instead prefer redirecting to the current origin root. If FRONTEND_BASE
+      // resolves to the same origin, we'll use it (useful when running behind a proxy).
+      try {
+        const fbUrl = new URL(FRONTEND_BASE);
+        if (fbUrl.origin === window.location.origin) {
+          window.location.href = fbUrl.href;
+        } else {
+          // Different origin — use relative root to avoid cross-origin reload.
+          window.location.href = "/";
+        }
+      } catch (_) {
+        // If FRONTEND_BASE is not a valid URL, navigate to root
+        window.location.href = "/";
+      }
     }
     return Promise.reject(error);
   }

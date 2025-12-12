@@ -80,8 +80,8 @@ export default function Cart() {
                       Start shopping to add items to your cart
                     </p>
                     <Button variant="hero" asChild>
-                      <a href="/marketplace">Continue Shopping</a>
-                    </Button>
+                        <Link to="/marketplace">Continue Shopping</Link>
+                      </Button>
                   </CardContent>
                 </Card>
               ) : (
@@ -199,7 +199,7 @@ export default function Cart() {
                       Proceed to Checkout
                     </Button>
                     <Button variant="outline" size="lg" className="w-full" asChild>
-                      <a href="/marketplace">Continue Shopping</a>
+                      <Link to="/marketplace">Continue Shopping</Link>
                     </Button>
                   </CardContent>
                 </Card>
