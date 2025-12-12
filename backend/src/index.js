@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from './config/database.js';
 import errorHandler from './middleware/errorHandler.js';
 
+
 // Routes
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
@@ -25,7 +26,7 @@ const PORT = process.env.PORT || 4000;
 app.use(
   cors({
     origin: "https://agronexus-phi.vercel.app",
-    credentials: true,
+    credentials: true
   })
 );
 
