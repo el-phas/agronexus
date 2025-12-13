@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { User, Farmer } from '../models/index.js';
 
-const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE });
+const generateToken = (userId) => {
+  const secret = process.env.JWT_SECRET || 'fallback-secret-for-development';
+  const expiresIn = process.env.JWT_EXPIRE || '24h';
+  return jwt.sign({ userId }, secret, { expiresIn });
+};
 
 export const register = async (req, res) => {
   try {
@@ -13,35 +17,49 @@ export const register = async (req, res) => {
     farm_name = typeof farm_name === 'string' ? farm_name.trim() : '';
     location = typeof location === 'string' ? location.trim() : '';
 
-    if (!username || !email || !password || !user_type) return res.status(400).json({ error: 'Missing required fields: username, email, password, user_type' });
+    if (!username || !email || !password || !user_type) {
+      return res.status(400).json({ error: 'Missing required fields: username, email, password, user_type' });
+    }
 
     // If registering as farmer, require farm_name and location for better onboarding
     if (user_type === 'farmer' && (!farm_name || !location)) {
       return res.status(400).json({ error: 'Farmer registration requires farm_name and location' });
     }
 
-    const user = await User.create({ username, email, password, user_type, first_name, last_name });
+    try {
+      const user = await User.create({ username, email, password, user_type, first_name, last_name });
 
-    if (user_type === 'farmer') {
-      await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
+      if (user_type === 'farmer') {
+        await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
+      }
+
+      const token = generateToken(user._id.toString());
+      // Set HttpOnly secure cookie for session token
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      };
+      res.cookie('agronexus_token', token, cookieOptions);
+      res.status(201).json({ 
+        user: { 
+          id: user._id.toString(), 
+          username: user.username, 
+          email: user.email, 
+          user_type: user.user_type 
+        }, 
+        token 
+      });
+    } catch (error) {
+      // Duplicate key error
+      if (error && error.code === 11000) {
+        const dupKey = Object.keys(error.keyValue || {})[0] || 'field';
+        return res.status(409).json({ error: `${dupKey} already exists` });
+      }
+      res.status(500).json({ error: error.message });
     }
-
-    const token = generateToken(user._id);
-    // Set HttpOnly secure cookie for session token
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    };
-    res.cookie('agronexus_token', token, cookieOptions);
-    res.status(201).json({ user: { id: user._id, username: user.username, email: user.email, user_type: user.user_type }, token });
   } catch (error) {
-    // Duplicate key error
-    if (error && error.code === 11000) {
-      const dupKey = Object.keys(error.keyValue || {})[0] || 'field';
-      return res.status(409).json({ error: `${dupKey} already exists` });
-    }
     res.status(500).json({ error: error.message });
   }
 };
@@ -49,15 +67,21 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     const valid = await user.comparePassword(password);
-    if (!valid) return res.status(401).json({ error: 'Invalid password' });
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id.toString());
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -65,7 +89,15 @@ export const login = async (req, res) => {
       maxAge: 1000 * 60 * 60 * 24 * 7,
     };
     res.cookie('agronexus_token', token, cookieOptions);
-    res.json({ user: { id: user._id, username: user.username, email: user.email, user_type: user.user_type }, token });
+    res.json({ 
+      user: { 
+        id: user._id.toString(), 
+        username: user.username, 
+        email: user.email, 
+        user_type: user.user_type 
+      }, 
+      token 
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -73,9 +105,22 @@ export const login = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).lean();
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    // req.user is set by middleware as full user object
+    const userId = req.user._id;
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ 
+      user: {
+        id: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        user_type: user.user_type,
+        first_name: user.first_name,
+        last_name: user.last_name
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
