@@ -1,0 +1,11 @@
+{
+  "watch": ["src"],
+  "ext": "js",
+  "ignore": ["node_modules", "dist"],
+  "exec": "node",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 500,
+  "legacyWatch": true
+}
