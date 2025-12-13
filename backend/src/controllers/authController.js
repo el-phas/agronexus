@@ -20,14 +20,13 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: 'Farmer registration requires farm_name and location' });
     }
 
-    try {
-      const user = await User.create({ username, email, password, user_type, first_name, last_name });
+    const user = await User.create({ username, email, password, user_type, first_name, last_name });
 
-      if (user_type === 'farmer') {
-        await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
-      }
+    if (user_type === 'farmer') {
+      await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
+    }
 
-      const token = generateToken(user._id);
+    const token = generateToken(user._id);
     // Set HttpOnly secure cookie for session token
     const cookieOptions = {
       httpOnly: true,
