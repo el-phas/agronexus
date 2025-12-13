@@ -35,6 +35,7 @@ class AuthService {
       const { token, user } = response.data;
       // Store user locally; token is also set as HttpOnly cookie by the server for security
       this.setUser(user);
+      if (token) this.setToken(token);
       return response.data;
     } catch (error) {
       console.error("Registration error:", error);
@@ -51,6 +52,7 @@ class AuthService {
       const { token, user } = response.data;
       // Store user locally; server sets HttpOnly cookie for the token
       this.setUser(user);
+      if (token) this.setToken(token);
       return response.data;
     } catch (error) {
       console.error("Login error:", error);

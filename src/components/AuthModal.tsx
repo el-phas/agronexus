@@ -41,6 +41,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
     confirmPassword: "",
     first_name: "",
     last_name: "",
+    farm_name: "",
+    location: "",
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -78,6 +80,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
         user_type: userType,
         first_name: registerData.first_name,
         last_name: registerData.last_name,
+        farm_name: registerData.farm_name,
+        location: registerData.location,
       });
       onOpenChange(false);
       navigate(userType === "farmer" ? "/dashboard" : "/marketplace");
@@ -194,6 +198,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
             </div>
 
             <form onSubmit={handleRegister} className="space-y-3">
+              {userType === 'farmer' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Farm Name"
+                    value={registerData.farm_name}
+                    onChange={(e) => setRegisterData({ ...registerData, farm_name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Location (e.g., Kiambu, Kenya)"
+                    value={registerData.location}
+                    onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <Input
                   placeholder="First Name"

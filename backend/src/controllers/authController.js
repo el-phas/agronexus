@@ -5,7 +5,7 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, user_type, first_name, last_name } = req.body;
+    const { username, email, password, user_type, first_name, last_name, farm_name, location } = req.body;
     if (!username || !email || !password || !user_type) return res.status(400).json({ error: 'Missing required fields' });
 
     const existing = await User.findOne({ email });
@@ -14,7 +14,8 @@ export const register = async (req, res) => {
     const user = await User.create({ username, email, password, user_type, first_name, last_name });
 
     if (user_type === 'farmer') {
-      await Farmer.create({ user_id: user._id, location: '', farm_name: username });
+      // Use provided farm_name/location if available; fallback to username and empty string
+      await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
     }
 
     const token = generateToken(user._id);

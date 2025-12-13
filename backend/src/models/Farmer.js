@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const FarmerSchema = new Schema({
   user_id: { type: Schema.Types.ObjectId, ref: 'User', unique: true, required: true },
-  location: { type: String, required: true },
+  location: { type: String, default: '' },
   farm_name: { type: String },
   bio: { type: String },
   rating: { type: Number, default: 0 },
