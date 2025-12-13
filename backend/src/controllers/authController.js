@@ -5,20 +5,29 @@ const generateToken = (userId) => jwt.sign({ userId }, process.env.JWT_SECRET, {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, user_type, first_name, last_name, farm_name, location } = req.body;
-    if (!username || !email || !password || !user_type) return res.status(400).json({ error: 'Missing required fields' });
+    let { username, email, password, user_type, first_name, last_name, farm_name, location } = req.body || {};
 
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(409).json({ error: 'Email already exists' });
+    // Basic sanitization
+    username = typeof username === 'string' ? username.trim() : '';
+    email = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    farm_name = typeof farm_name === 'string' ? farm_name.trim() : '';
+    location = typeof location === 'string' ? location.trim() : '';
 
-    const user = await User.create({ username, email, password, user_type, first_name, last_name });
+    if (!username || !email || !password || !user_type) return res.status(400).json({ error: 'Missing required fields: username, email, password, user_type' });
 
-    if (user_type === 'farmer') {
-      // Use provided farm_name/location if available; fallback to username and empty string
-      await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
+    // If registering as farmer, require farm_name and location for better onboarding
+    if (user_type === 'farmer' && (!farm_name || !location)) {
+      return res.status(400).json({ error: 'Farmer registration requires farm_name and location' });
     }
 
-    const token = generateToken(user._id);
+    try {
+      const user = await User.create({ username, email, password, user_type, first_name, last_name });
+
+      if (user_type === 'farmer') {
+        await Farmer.create({ user_id: user._id, location: location || '', farm_name: farm_name || username });
+      }
+
+      const token = generateToken(user._id);
     // Set HttpOnly secure cookie for session token
     const cookieOptions = {
       httpOnly: true,
@@ -29,6 +38,11 @@ export const register = async (req, res) => {
     res.cookie('agronexus_token', token, cookieOptions);
     res.status(201).json({ user: { id: user._id, username: user.username, email: user.email, user_type: user.user_type }, token });
   } catch (error) {
+    // Duplicate key error
+    if (error && error.code === 11000) {
+      const dupKey = Object.keys(error.keyValue || {})[0] || 'field';
+      return res.status(409).json({ error: `${dupKey} already exists` });
+    }
     res.status(500).json({ error: error.message });
   }
 };

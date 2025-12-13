@@ -45,6 +45,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
     location: "",
   });
 
+  const [registerErrors, setRegisterErrors] = useState<Record<string, string>>({});
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -65,8 +67,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
     e.preventDefault();
     setError(null);
 
-    if (registerData.password !== registerData.confirmPassword) {
-      setError("Passwords do not match");
+    // Client-side validation
+    const errors: Record<string, string> = {};
+    if (!registerData.username.trim()) errors.username = 'Username is required';
+    if (!registerData.email.trim()) errors.email = 'Email is required';
+    if (!registerData.password) errors.password = 'Password is required';
+    if (registerData.password !== registerData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+    if (userType === 'farmer') {
+      if (!registerData.farm_name.trim()) errors.farm_name = 'Farm name is required for farmers';
+      if (!registerData.location.trim()) errors.location = 'Location is required for farmers';
+    }
+
+    setRegisterErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setError('Please fix the highlighted fields');
       return;
     }
 
@@ -206,12 +220,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                     onChange={(e) => setRegisterData({ ...registerData, farm_name: e.target.value })}
                     required
                   />
+                  {registerErrors.farm_name && <p className="text-destructive text-sm mt-1">{registerErrors.farm_name}</p>}
                   <Input
                     placeholder="Location (e.g., Kiambu, Kenya)"
                     value={registerData.location}
                     onChange={(e) => setRegisterData({ ...registerData, location: e.target.value })}
                     required
                   />
+                  {registerErrors.location && <p className="text-destructive text-sm mt-1">{registerErrors.location}</p>}
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2">
@@ -245,6 +261,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                 }
                 required
               />
+              {registerErrors.username && <p className="text-destructive text-sm mt-1">{registerErrors.username}</p>}
               <Input
                 placeholder="Email"
                 type="email"
@@ -254,6 +271,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                 }
                 required
               />
+              {registerErrors.email && <p className="text-destructive text-sm mt-1">{registerErrors.email}</p>}
               <Input
                 placeholder="Password"
                 type="password"
@@ -263,6 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                 }
                 required
               />
+              {registerErrors.password && <p className="text-destructive text-sm mt-1">{registerErrors.password}</p>}
               <Input
                 placeholder="Confirm Password"
                 type="password"
@@ -275,6 +294,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onOpenChange }) => {
                 }
                 required
               />
+              {registerErrors.confirmPassword && <p className="text-destructive text-sm mt-1">{registerErrors.confirmPassword}</p>}
 
               <Button
                 type="submit"
