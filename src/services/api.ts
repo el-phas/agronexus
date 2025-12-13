@@ -19,7 +19,17 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  // Increase timeout to avoid premature aborts during slower local responses
+  timeout: 20000,
 });
+
+// Log the resolved API base for easier debugging in the browser console
+// This helps confirm whether the frontend is pointing to the intended backend origin.
+// It will show during development in the browser console when the bundle loads.
+try {
+  // eslint-disable-next-line no-console
+  console.info('[agronexus] Resolved API base:', API_BASE + '/api');
+} catch (e) {}
 
 // Add token to requests
 api.interceptors.request.use((config) => {
